@@ -7,7 +7,7 @@ namespace RegEx
         static void Main(string[] args)
         {
             Console.WriteLine("Teeme Regular Expression harjutuse");
-
+            //kui lisan J tähe, siis on false
             string word = "#CD5C5CJ";
             Console.WriteLine("Hex code: " + word);
             Console.WriteLine("Kas on regex: " + RegExTest(word));
