@@ -1,3 +1,5 @@
 <Solution>
+  <Project Path="InheritanceAndServiceClass.AppServices/InheritanceAndServiceClass.AppServices.csproj" />
+  <Project Path="InheritanceAndServiceClass.Core/InheritanceAndServiceClass.Core.csproj" />
   <Project Path="InheritanceAndServiceClass/InheritanceAndServiceClass.csproj" />
 </Solution>
