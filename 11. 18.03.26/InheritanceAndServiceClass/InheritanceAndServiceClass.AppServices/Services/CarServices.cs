@@ -7,8 +7,22 @@ namespace InheritanceAndServiceClass.AppServices.Services
     {
         public void GetData()
         {
-            Console.WriteLine("Car Services 123");
+            Console.WriteLine("Car Services Get");
         }
 
+        public void PostData()
+        {
+            Console.WriteLine("Car Services Post");
+        }
+
+        public void UpdateData()
+        {
+            Console.WriteLine("Car Services Update");
+        }
+
+        public void DeleteData()
+        {
+            Console.WriteLine("Car Services Delete");
+        }
     }
 }

@@ -20,28 +20,43 @@ namespace InheritanceAndServiceClass
         static void Main(string[] args)
         {
             var builder = WebApplication.CreateBuilder(args);
+            var app = builder.Build();
 
             builder.Services.AddScoped<ICarServices, CarServices>();
 
             Console.WriteLine("Hello, World Switch!");
             int choice = int.Parse(Console.ReadLine());
 
-            switch (choice)
+            using (var scope = app.Services.CreateScope())
             {
+                var carServices = scope.ServiceProvider.GetRequiredService<ICarServices>();
+                var program = new Program(carServices);
+
+                switch (choice)
+                {
                 case 1:
-                    var app = builder.Build();
-                    using (var scope = app.Services.CreateScope())
-                    {
-                        var carServices = scope.ServiceProvider.GetRequiredService<ICarServices>();
-                        var program = new Program(carServices);
-                        program.GetAsync();
-                    }
+                    program.GetAsync();
+                    break;
+
+                case 2:
+                    program.PostAsy
+                    break;
+
+                case 3:
+
+                    break;
+
+                case 4:
+
                     break;
 
                 default:
                     Console.WriteLine("Error");
                     break;
+                }
             }
+
+
         }
 
         public IActionResult GetAsync()
@@ -50,6 +65,8 @@ namespace InheritanceAndServiceClass
 
             return View();
         }
+
+
 
         private IActionResult View()
         {
