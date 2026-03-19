@@ -19,16 +19,20 @@ namespace InheritanceAndServiceClass
 
         static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
-            var app = builder.Build();
+            var builder = WebApplication.CreateBuilder(args);    
 
             builder.Services.AddScoped<ICarServices, CarServices>();
+
+            var app = builder.Build();
 
             Console.WriteLine("Hello, World Switch!");
             int choice = int.Parse(Console.ReadLine());
 
             using (var scope = app.Services.CreateScope())
             {
+                //Console.WriteLine("Hello, World Switch!");
+                //int choice = int.Parse(Console.ReadLine());
+
                 var carServices = scope.ServiceProvider.GetRequiredService<ICarServices>();
                 var program = new Program(carServices);
 
@@ -39,15 +43,15 @@ namespace InheritanceAndServiceClass
                     break;
 
                 case 2:
-                    program.PostAsy
+                    program.SaveAsync();
                     break;
 
                 case 3:
-
+                    program.PutAsync();
                     break;
 
                 case 4:
-
+                    program.DeleteAsync();
                     break;
 
                 default:
@@ -55,13 +59,32 @@ namespace InheritanceAndServiceClass
                     break;
                 }
             }
-
-
         }
 
         public IActionResult GetAsync()
         {
             _carServices.GetData();
+
+            return View();
+        }
+
+        public IActionResult SaveAsync()
+        {
+            _carServices.PostData();
+
+            return View();
+        }
+
+        public IActionResult PutAsync()
+        {
+            _carServices.UpdateData();
+
+            return View();
+        }
+
+        public IActionResult DeleteAsync()
+        {
+            _carServices.DeleteData();
 
             return View();
         }
