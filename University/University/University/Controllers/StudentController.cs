@@ -48,14 +48,29 @@ namespace University.Controllers
             var student = await _context.Students
                 .FirstOrDefaultAsync(m => m.Id == id);
 
+            var vm = new ViewModel.StudentDetailsViewModel
+            {
+                Id = student.Id,
+                LastName = student.LastName,
+                FirstMidName = student.FirstMidName,
+                EnrollmentDate = student.EnrollmentDate
+            };
+
             //kui student on null, siis tagastame NotFound() tulemuse
             if (student == null)
             {
                 return NotFound();
             }
 
-            //kui student on leitud, siis tagastame View(student) tulemuse
-            return View(student);
+            //kui student on leitud, siis tagastame View(vm) tulemuse
+            return View(vm);
+        }
+
+        public async Task<IActionResult> Create()
+        {
+
+
+            return View();
         }
     }
 }
