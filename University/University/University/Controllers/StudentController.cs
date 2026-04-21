@@ -78,7 +78,7 @@ namespace University.Controllers
         //see meetod salvestab uue student'i andmebaasi
         [HttpPost]
         //see meetod on kaitstud CSRF rünnakute eest
-        //see meetod on as[nkroonene, mis tähendab, et see meetod ei saa
+        //see meetod on asünkroonene, mis tähendab, et see meetod ei saa
         //olla samaaegselt mitu korda käivitatud
         public async Task<IActionResult> Create(StudentCreateViewModel vm)
         {
