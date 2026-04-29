@@ -25,7 +25,7 @@ namespace University.Controllers
             //kui me kasutame await, siis me ootame kuni päring on lõpetatud
             //ja saame tulemuse, enne kui me jätkame koodi täitmist
             var result = await _context.Students
-                .Select(s => new ViewModel.StudentIndexViewModel
+                .Select(s => new StudentIndexViewModel
                 {
                     Id = s.Id,
                     LastName = s.LastName,
@@ -178,7 +178,6 @@ namespace University.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        //tehke Delete Get meetod koos vaatega
         [HttpGet]
         public async Task<IActionResult> Delete(int? id)
         {
@@ -220,6 +219,33 @@ namespace University.Controllers
             }
 
             return View(vm);
+        }
+
+
+        //tuleb teha ankeedi kustutamise nupp
+        public async Task<IActionResult> DeletePost(int id)
+        {
+            try
+            {
+                Student delete = new Student()
+                {
+                    Id = id,
+                };
+                //teine variant
+                //var delete = await _context.Students
+                //    .FirstOrDefaultAsync(x => x.Id == id);
+
+                _context.Students.Remove(delete);
+                await _context.SaveChangesAsync();
+                return RedirectToAction(nameof(Index));
+            }
+            catch (DbUpdateException)
+            {
+                return RedirectToAction(nameof(Delete), new { id = id, saveChangesError = true });
+                throw;
+            }
+
+            return RedirectToAction(nameof(Delete));
         }
     }
 }
