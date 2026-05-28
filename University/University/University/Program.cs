@@ -58,7 +58,7 @@ namespace University
                 try
                 {
                     var context = services.GetRequiredService<UniversityContext>();
-                    DbInitializer.Initialize(context);
+                    DbInitializer.Initializer(context);
                 }
                 catch (Exception ex)
                 {
