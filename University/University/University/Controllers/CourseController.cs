@@ -101,10 +101,7 @@ namespace University.Controllers
                 CourseId = vm.CourseId,
                 Title = vm.Title,
                 Credits = vm.Credits,
-                Departments = new Department
-                {
-                    Name = vm.Department.Name
-                }
+                DepartmentId = vm.DepartmentId,
             };
 
             _context.Add(course);
@@ -114,11 +111,44 @@ namespace University.Controllers
             return RedirectToAction(nameof(Index));
         }
 
+        public async Task<IActionResult> Details(int? id)
+        {
+            if (id == null)
+            {
+                return NotFound();
+            }
+
+            var course = await _context.Courses
+                .Include(c => c.Departments)
+                .Where(c => c.CourseId == id)
+                .Select(c => new CourseDetailsViewModel
+                {
+                    CourseId = c.CourseId,
+                    Credits = c.Credits,
+                    Title = c.Title,
+                    DepartmentId = c.DepartmentId,
+                    Department = new CourseDepartmentIndexViewModel
+                    {
+                        DepartmentName = c.Departments.Name
+                    }
+                })
+                .FirstOrDefaultAsync();
+
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            return View(course);
+        }
+
         private void PopulateDepartmentDropDownList(object selectedDepartment = null)
         {
-            var departmentsQuery = from d in _context.Departments
-                                   orderby d.Name
-                                   select d;
+            var departmentsQuery = _context.Departments
+                .OrderBy(d => d.Name)
+                .GroupBy(d => d.Name)
+                .Select(g => g.First());
+
             ViewBag.DepartmentId = new SelectList(departmentsQuery
                 .AsNoTracking(), "DepartmentId", "Name", selectedDepartment);
         }
