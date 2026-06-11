@@ -152,7 +152,7 @@ namespace University.Controllers
             var course = await _context.Courses
                 .Include(c => c.Departments)
                 .Where(c => c.CourseId == id)
-                .Select(c => new CourseDetailsViewModel
+                .Select(c => new CourseDeleteViewModel
                 {
                     CourseId = c.CourseId,
                     Credits = c.Credits,
