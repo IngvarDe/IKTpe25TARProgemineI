@@ -1,6 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
+
 namespace University.ViewModel.CourseVM
 {
     public class CourseCreateViewModel
@@ -13,14 +14,5 @@ namespace University.ViewModel.CourseVM
         public int DepartmentId { get; set; }
 
         public List<IFormFile> Files { get; set; }
-        public List<ImageViewModel> Image { get; set; }
-            = new List<ImageViewModel>();
-
-        public DepartmentViewModel Department { get; set; }
-    }
-
-    public class DepartmentViewModel
-    {
-        public string? Name { get; set; }
     }
 }

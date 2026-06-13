@@ -1,8 +1,10 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using University.Data;
 using University.Models;
+using University.ServiceInterface;
 using University.ViewModel.CourseVM;
 
 namespace University.Controllers
@@ -10,12 +12,16 @@ namespace University.Controllers
     public class CourseController : Controller
     {
         private readonly UniversityContext _context;
+        private readonly IFileServices _fileServices;
+
         public CourseController
             (
-                UniversityContext context
+                UniversityContext context,
+                IFileServices fileServices
             )
         {
             _context = context;
+            _fileServices = fileServices;
         }
 
         public async Task<IActionResult> Index()
@@ -27,6 +33,7 @@ namespace University.Controllers
                     Credits = c.Credits,
                     Title = c.Title,
                     DepartmentId = c.DepartmentId,
+
                     Department = new CourseDepartmentIndexViewModel
                     {
                         DepartmentName = c.Departments.Name
@@ -43,46 +50,65 @@ namespace University.Controllers
                 return NotFound();
             }
 
-            var vm = await _context.Courses
-                .Where(c => c.CourseId == id)
-                .Select(c => new CourseUpdateViewModel
-                {
-                    CourseId = c.CourseId,
-                    Credits = c.Credits,
-                    Title = c.Title,
-                    Department = new CourseDepartmentIndexViewModel
+            var course = await _context.Courses
+                .Include(c => c.Files)
+                .FirstOrDefaultAsync(c => c.CourseId == id);
+
+            if (course == null)
+            {
+                return NotFound();
+            }
+
+            var vm = new CourseUpdateViewModel
+            {
+                CourseId = course.CourseId,
+                Title = course.Title,
+                Credits = course.Credits,
+                DepartmentId = course.DepartmentId,
+                Files = course.Files
+                    .Select(f => new ImageViewModel
                     {
-                        DepartmentName = c.Departments != null ? c.Departments.Name : null
-                    }
-                })
-                .FirstOrDefaultAsync();
+                        ImageId = f.Id,
+                        FilePath = f.ExistingFilePath
+                    })
+                    .ToList()
+            };
+
+            PopulateDepartmentDropDownList(course.DepartmentId);
 
             return View(vm);
         }
 
         [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> Update(CourseUpdateViewModel vm)
         {
             if (ModelState.IsValid)
             {
-                var course = new Course
-                {
-                    CourseId = vm.CourseId,
-                    Title = vm.Title,
-                    Credits = vm.Credits,
-                    Departments = new Department
-                    {
-                        Name = vm.Department.DepartmentName
-                    }
-                };
+                return View(vm);
+            }
+            PopulateDepartmentDropDownList(vm.DepartmentId);
 
-                _context.Update(course);
-                await _context.SaveChangesAsync();
+            var course = await _context.Courses
+                .FirstOrDefaultAsync(c => c.CourseId == vm.CourseId);
 
-                return RedirectToAction(nameof(Index));
+            if (course == null)
+            {
+                return NotFound();
             }
 
-            return RedirectToAction(nameof(Index));
+            course.Title = vm.Title;
+            course.Credits = vm.Credits;
+            course.DepartmentId = vm.DepartmentId;
+
+            await _context.SaveChangesAsync();
+
+            if (vm.FileToApis != null && vm.FileToApis.Count > 0)
+            {
+                await _fileServices.AddFilesToCourse(vm.FileToApis, course.CourseId);
+            }
+
+            return RedirectToAction(nameof(Details), new { id = course.CourseId });
         }
 
         public IActionResult Create()
@@ -95,19 +121,28 @@ namespace University.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CourseCreateViewModel vm)
         {
-
-            var course = new Course
+            if (!ModelState.IsValid)
             {
-                CourseId = vm.CourseId,
-                Title = vm.Title,
-                Credits = vm.Credits,
-                DepartmentId = vm.DepartmentId,
-            };
+                PopulateDepartmentDropDownList(vm.DepartmentId);
 
-            _context.Add(course);
-            await _context.SaveChangesAsync();
+                var course = new Course
+                {
+                    CourseId = vm.CourseId,
+                    Title = vm.Title,
+                    Credits = vm.Credits,
+                    DepartmentId = vm.DepartmentId
+                };
 
-            PopulateDepartmentDropDownList(course.DepartmentId);
+                // save course first to get CourseId
+                _context.Courses.Add(course);
+                await _context.SaveChangesAsync();
+
+                // save uploaded files
+                await _fileServices.AddFilesToCourse(vm.Files, course.CourseId);
+
+                return RedirectToAction(nameof(Index));
+            }
+
             return RedirectToAction(nameof(Index));
         }
 
@@ -120,6 +155,7 @@ namespace University.Controllers
 
             var course = await _context.Courses
                 .Include(c => c.Departments)
+                .Include(c => c.Files)
                 .Where(c => c.CourseId == id)
                 .Select(c => new CourseDetailsViewModel
                 {
@@ -130,7 +166,14 @@ namespace University.Controllers
                     Department = new CourseDepartmentIndexViewModel
                     {
                         DepartmentName = c.Departments.Name
-                    }
+                    },
+                    Files = c.Files
+                        .Select(f => new ImageViewModel
+                        {
+                            ImageId = f.Id,
+                            FilePath = f.ExistingFilePath
+                        })
+                        .ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -161,7 +204,14 @@ namespace University.Controllers
                     Department = new CourseDepartmentIndexViewModel
                     {
                         DepartmentName = c.Departments.Name
-                    }
+                    },
+                    Files = c.Files
+                        .Select(f => new ImageViewModel
+                        {
+                            ImageId = f.Id,
+                            FilePath = f.ExistingFilePath
+                        })
+                        .ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -177,13 +227,46 @@ namespace University.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
-            var course = await _context.Courses.FindAsync(id);
-            if (course != null)
+            var course = await _context.Courses
+                .Include(c => c.Files)
+                .FirstOrDefaultAsync(c => c.CourseId == id);
+
+
+            if (course == null)
             {
-                _context.Courses.Remove(course);
+                return NotFound();
             }
+
+            // delete physical files + database records
+            await _fileServices.RemoveImagesFromApi(
+                course.Files.ToList());
+
+            // delete course
+            _context.Courses.Remove(course);
             await _context.SaveChangesAsync();
+
             return RedirectToAction(nameof(Index));
+        }
+
+        public async Task RemoveFile(Guid id)
+        {
+            var file = await _context.FileToApis
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (file == null) return;
+
+            //var path = Path.Combine(
+            //    _webHost.ContentRootPath,
+            //    "wwwroot",
+            //    "multipleFileUpload",
+            //    file.ExistingFilePath);
+
+            //if (File.Exists(path))
+            //    File.Delete(path);
+
+            _context.FileToApis.Remove(file);
+
+            await _context.SaveChangesAsync();
         }
 
         private void PopulateDepartmentDropDownList(object selectedDepartment = null)

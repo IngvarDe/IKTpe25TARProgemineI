@@ -10,6 +10,10 @@ namespace University.ViewModel.CourseVM
         public int CourseId { get; set; }
         public string? Title { get; set; }
         public int Credits { get; set; }
+
+        public List<ImageViewModel> Files { get; set; } = new();
+
+
         public int DepartmentId { get; set; }
         public CourseDepartmentIndexViewModel? Department { get; set; }
     }

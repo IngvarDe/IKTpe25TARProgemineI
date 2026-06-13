@@ -1,53 +1,86 @@
-﻿using University.Dto;
+﻿using University.Data;
 using University.Models;
+using University.ServiceInterface;
 
 
 namespace University.Services
 {
-    public class FileServices
+    public class FileServices : IFileServices
     {
         private readonly IHostEnvironment _webHost;
+        private readonly UniversityContext _context;
 
         public FileServices
             (
-                IHostEnvironment webHost
+                IHostEnvironment webHost,
+                UniversityContext context
             )
         {
             _webHost = webHost;
+            _context = context;
         }
 
-
-        public void FilesToApi(CourseDto dto, Course domain)
+        public async Task AddFilesToCourse(List<IFormFile> files, int courseId)
         {
-            //tingimus, kui File ei ole null v]i on vähemalt rohkem, kui 0 faili
-            if (dto.Files != null && dto.Files.Count > 0)
+            if (files == null || files.Count == 0)
+                return;
+
+            var folder = Path.Combine(
+                _webHost.ContentRootPath,
+                "wwwroot",
+                "multipleFileUpload");
+
+            if (!Directory.Exists(folder))
             {
-                if (!Directory.Exists(_webHost.ContentRootPath + "\\wwwroot\\multipleFileUpload\\"))
+                Directory.CreateDirectory(folder);
+            }
+
+            foreach (var file in files)
+            {
+                string uniqueFileName =
+                    Guid.NewGuid() + "-" + file.FileName;
+
+                string filePath = Path.Combine(folder, uniqueFileName);
+
+                using (var stream = new FileStream(filePath, FileMode.Create))
                 {
-                    Directory.CreateDirectory(_webHost.ContentRootPath + "\\wwwroot\\multipleFileUpload\\");
+                    await file.CopyToAsync(stream);
                 }
 
-                foreach (var file in dto.Files)
+                var entity = new FileToApi
                 {
-                    string uploadsFolder = Path.Combine(_webHost.ContentRootPath, "wwwroot", "multipleFileUpload");
-                    string uniqueFileName = Guid.NewGuid().ToString() + " - " + file.FileName;
-                    string filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    Id = Guid.NewGuid(),
+                    ExistingFilePath = uniqueFileName,
+                    CourseId = courseId
+                };
 
-                    using (var fileStream = new FileStream(filePath, FileMode.Create))
-                    {
-                        file.CopyTo(fileStream);
+                _context.FileToApis.Add(entity);
+            }
 
-                        FileToApi path = new FileToApi
-                        {
-                            Id = Guid.NewGuid(),
-                            ExistingFilePath = uniqueFileName,
-                            CourseId = domain.CourseId
-                        };
+            await _context.SaveChangesAsync();
+        }
 
-                        //_context.FileToApis.Add(path);
-                    }
+        public async Task RemoveImagesFromApi(List<FileToApi> files)
+        {
+            if (files == null || files.Count == 0)
+                return;
+
+            foreach (var file in files)
+            {
+                var filePath = Path.Combine(
+                    _webHost.ContentRootPath,
+                    "wwwroot",
+                    "multipleFileUpload",
+                    file.ExistingFilePath);
+
+                if (File.Exists(filePath))
+                {
+                    File.Delete(filePath);
                 }
-            }    
+            }
+
+            _context.FileToApis.RemoveRange(files);
+            await _context.SaveChangesAsync();
         }
     }
 }

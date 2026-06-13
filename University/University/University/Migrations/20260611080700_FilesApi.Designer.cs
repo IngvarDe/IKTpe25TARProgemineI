@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using University.Data;
 
@@ -11,9 +12,11 @@ using University.Data;
 namespace University.Migrations
 {
     [DbContext(typeof(UniversityContext))]
-    partial class UniversityContextModelSnapshot : ModelSnapshot
+    [Migration("20260611080700_FilesApi")]
+    partial class FilesApi
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -119,27 +122,13 @@ namespace University.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<string>("ContentType")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<int>("CourseId")
                         .HasColumnType("int");
 
                     b.Property<string>("ExistingFilePath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("FileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("StoredFileName")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("CourseId");
 
                     b.ToTable("FileToApis", (string)null);
                 });
@@ -266,17 +255,6 @@ namespace University.Migrations
                     b.Navigation("Student");
                 });
 
-            modelBuilder.Entity("University.Models.FileToApi", b =>
-                {
-                    b.HasOne("University.Models.Course", "Course")
-                        .WithMany("Files")
-                        .HasForeignKey("CourseId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Course");
-                });
-
             modelBuilder.Entity("University.Models.OfficeAssignment", b =>
                 {
                     b.HasOne("University.Models.Instructor", "Instructor")
@@ -293,8 +271,6 @@ namespace University.Migrations
                     b.Navigation("CourseAssignments");
 
                     b.Navigation("Enrollments");
-
-                    b.Navigation("Files");
                 });
 
             modelBuilder.Entity("University.Models.Department", b =>
