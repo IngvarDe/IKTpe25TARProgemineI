@@ -3,6 +3,7 @@ using University.Models;
 using University.ServiceInterface;
 
 
+
 namespace University.Services
 {
     public class FileServices : IFileServices
@@ -80,6 +81,26 @@ namespace University.Services
             }
 
             _context.FileToApis.RemoveRange(files);
+            await _context.SaveChangesAsync();
+        }
+
+        public async Task RemoveFileFromApi(FileToApi file)
+        {
+            if (file == null)
+                return;
+
+            var filePath = Path.Combine(
+                _webHost.ContentRootPath,
+                "wwwroot",
+                "multipleFileUpload",
+                file.ExistingFilePath);
+
+            if (File.Exists(filePath))
+            {
+                File.Delete(filePath);
+            }
+
+            _context.FileToApis.Remove(file);
             await _context.SaveChangesAsync();
         }
     }

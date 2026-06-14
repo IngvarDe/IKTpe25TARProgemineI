@@ -47,6 +47,7 @@
                 <div class="form-group row col-sm-4 offset-2"> 
                 <div>@file.FilePath</div> 
                 <img class="card-image-top" src="@photoPaths" asp-append-version="true" /> </div>
+                <a asp-action="RemoveFile" asp-route-imageId="@file.ImageId">Remove file</a>
             }
         }
         else

@@ -121,7 +121,7 @@ namespace University.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Create(CourseCreateViewModel vm)
         {
-            if (!ModelState.IsValid)
+            if (ModelState.IsValid)
             {
                 PopulateDepartmentDropDownList(vm.DepartmentId);
 
@@ -248,25 +248,20 @@ namespace University.Controllers
             return RedirectToAction(nameof(Index));
         }
 
-        public async Task RemoveFile(Guid id)
+        
+        public async Task<IActionResult> RemoveFile(Guid imageId)
         {
             var file = await _context.FileToApis
-                .FirstOrDefaultAsync(x => x.Id == id);
+                .FirstOrDefaultAsync(x => x.Id == imageId);
 
-            if (file == null) return;
+            if (file == null)
+            {
+                return NotFound();
+            }
 
-            //var path = Path.Combine(
-            //    _webHost.ContentRootPath,
-            //    "wwwroot",
-            //    "multipleFileUpload",
-            //    file.ExistingFilePath);
+            await _fileServices.RemoveFileFromApi(file);
 
-            //if (File.Exists(path))
-            //    File.Delete(path);
-
-            _context.FileToApis.Remove(file);
-
-            await _context.SaveChangesAsync();
+            return RedirectToAction(nameof(Update), new { id = file.CourseId });
         }
 
         private void PopulateDepartmentDropDownList(object selectedDepartment = null)

@@ -7,5 +7,6 @@ namespace University.ServiceInterface
     {
         Task AddFilesToCourse(List<IFormFile> files, int courseId);
         Task RemoveImagesFromApi(List<FileToApi> files);
+        Task RemoveFileFromApi(FileToApi file);
     }
 }
